@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body>
+<div x-data x-init="$refs.bob.scrollIntoView();">
+    <div class="h-96">
+        <h1 class="text-3xl font-bold underline">
+            Hello world!
+        </h1>
+    </div>
+    <div class="h-96">
+        <h1 class="text-3xl font-bold underline">
+            Hello guys!
+        </h1>
+    </div>
+    <div x-ref="bob" class="h-96">
+        <h1 class="text-3xl font-bold underline">
+            Hello bob!
+        </h1>
+    </div>
+</div>
+</body>
+</html>
