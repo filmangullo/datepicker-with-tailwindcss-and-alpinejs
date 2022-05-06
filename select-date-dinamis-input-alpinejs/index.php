@@ -9,12 +9,123 @@
     <title>Document</title>
 </head>
 <body class="antialiased sans-serif">
+    <?php $dates = [date('Y-m-d'), date('Y-m-d', strtotime('+2 day'))]; echo json_encode($dates); echo date('Y-m-d', strtotime('Thu May 05 2022'))?>
+
+    <span x-text="datepickerValue"></span>
     <div class="flex items-center justify-center w-screen h-screen bg-gray-200 overflow-hidden">
-            <?php echo 'x' ?>
-            <div x-data="app()" x-init="[initDate(), getNoOfDays()]" x-cloak>
+            <?php  foreach ($dates as $key => $date) { ?>
+
+            <div x-data="
+            {
+                showDatepicker: false,
+                datepickerMin: '',
+                datepickerValue: '',
+                dateValue: '',
+                month: '',
+                year: '',
+                no_of_days: [],
+                blankdays: [],
+                days: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+
+                initDate() {
+                    
+                    if(!this.datepickerMin) {
+                        let today = new Date();
+                        this.month = today.getMonth();
+                        this.year = today.getFullYear();
+
+                        this.datepickerValue = new Date(this.year, this.month, today.getDate()).toDateString();
+                    } else { 
+                        let minDate = new Date (this.datepickerMin);
+                        this.month  = minDate.getMonth(); 
+                        this.year   = minDate.getFullYear();
+
+                        this.datepickerValue = new Date(this.year, this.month, minDate.getDate()).toDateString();
+                    }
+                },
+
+                isToday(date) {
+                    const today = new Date();
+                    
+                    const d = new Date(this.year, this.month, date);
+                    //   console.log(d);
+                    return today.toDateString() === d.toDateString() ? true : false;
+                },
+
+                isDisabledDate(date) {
+                    
+                    let theDay = '';
+                    let d = new Date(this.year, this.month, date);
+                    
+                    if(!this.datepickerMin) {
+                        theDay = new Date();
+                    } else {
+                        theDay = new Date(this.datepickerMin);
+                    }
+
+                    // console.log(theDay, d.getTime(), theDay.getTime(), date, d.getTime() < theDay.getTime() );
+
+                    return d.getTime() < theDay.getTime() && theDay.toDateString() !== d.toDateString() ? true : false;
+                },
+
+                setMinDate(date) {
+                    this.datepickerMin = date;
+                    //  console.log(this.datepickerMin);
+                },
+
+                isSelectedDate(date) {
+                    const d = new Date(this.year, this.month, date);
+                
+                    return this.datepickerValue === d.toDateString() ? true : false;
+                },
+
+                getDateValue(date) {
+                    let selectedDate = new Date(this.year, this.month, date);
+                    let minSelectedDate = new Date(this.datepickerMin);
+                 
+                    if( selectedDate.getTime() >= minSelectedDate.getTime() || selectedDate.toDateString() === minSelectedDate.toDateString() ) {
+                        this.datepickerValue = selectedDate.toDateString();
+
+                        this.$refs.date.value = selectedDate.getFullYear() +'-'+ ('0'+ selectedDate.getMonth()).slice(-2) +'-'+ ('0' + selectedDate.getDate()).slice(-2);
+
+                        // console.log(this.$refs.date.value);
+
+                        this.showDatepicker = false;
+                    }
+                },
+
+                getNoOfDays() {
+                    if(this.month < 0) {
+                        this.year -=  1;
+                        this.month =  11;
+                    }else if(this.month > 11) {
+                        this.year +=  1;
+                        this.month =  0;
+                    }
+                    // console.log(this.month);
+                    let daysInMonth = new Date(this.year, this.month + 1, 0).getDate();
+                    // find where to start calendar day of week
+                    let dayOfWeek = new Date(this.year, this.month).getDay();
+                    
+                    let blankdaysArray = [];
+                    for ( var i=1; i <= dayOfWeek; i++) {
+                        blankdaysArray.push(i);
+                    }
+
+                    let daysArray = [];
+                    for ( var i=1; i <= daysInMonth; i++) {
+                        daysArray.push(i);
+                    }
+
+                    this.blankdays = blankdaysArray;
+                    this.no_of_days = daysArray;
+                }
+            }
+            " x-init="[setMinDate('<?=$date?>'), initDate(), getNoOfDays()]" x-cloak>
                 <div class="container px-4 py-2 mx-auto md:py-10">
+
                     <div class="w-64 mb-5">
-                        <label for="datepicker" class="block mb-1 font-bold text-gray-700">Select Date</label>
+                        <label for="datepicker" class="block mb-1 font-bold text-gray-700">Select Date <span x-text="datepickerValue"></span></label>
                         <div class="relative">
                             <input type="hidden" name="date" x-ref="date">
                             <input 
@@ -113,7 +224,7 @@
                                                     @click="getDateValue(date)"
                                                     x-text="date"
                                                     class="text-sm leading-none leading-loose text-center transition duration-100 ease-in-out rounded-full cursor-pointer"
-                                                    :class="{'font-semibold': isToday(date) == true, ' hover:bg-blue-200': isToday(date) == false, 'font-semibold bg-red-500 text-white': isSelectedDate(date) == true, }"	
+                                                    :class="{'text-gray-200': isDisabledDate(date) == true, 'font-semibold': isToday(date) == true, ' hover:bg-blue-200': isToday(date) == false, 'font-semibold bg-red-500 text-white': isSelectedDate(date) == true, }"	
                                                 ></div>
                                             </div>
                                         </template>
@@ -126,83 +237,13 @@
                 </div>
             </div>
 
-            <script>
-                const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-                const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            <?php } ?>
 
-                function app() {
-                    return {
-                        showDatepicker: false,
-                        datepickerValue: '',
-
-                        month: '',
-                        year: '',
-                        no_of_days: [],
-                        blankdays: [],
-                        days: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
-
-                        initDate() {
-                            let today = new Date();
-                            this.month = today.getMonth();
-                            this.year = today.getFullYear();
-                            this.datepickerValue = new Date(this.year, this.month, today.getDate()).toDateString();
-                        },
-
-                        isToday(date) {
-                            const today = new Date();
-                            const d = new Date(this.year, this.month, date);
-                            //   console.log(today.toDateString(), d.toDateString());
-                            return today.toDateString() === d.toDateString() ? true : false;
-                        },
-
-                        isSelectedDate(date) {
-                            const d = new Date(this.year, this.month, date);
-                        
-                            return this.datepickerValue === d.toDateString() ? true : false;
-                        },
-
-                        getDateValue(date) {
-                            let selectedDate = new Date(this.year, this.month, date);
-                            this.datepickerValue = selectedDate.toDateString();
-
-                            this.$refs.date.value = selectedDate.getFullYear() +"-"+ ('0'+ selectedDate.getMonth()).slice(-2) +"-"+ ('0' + selectedDate.getDate()).slice(-2);
-
-                            console.log(this.$refs.date.value);
-
-                            this.showDatepicker = false;
-                        },
-
-                        getNoOfDays() {
-                            if(this.month < 0) {
-                                this.year -=  1;
-                                this.month =  11;
-                            }else if(this.month > 11) {
-                                this.year +=  1;
-                                this.month =  0;
-                            }
-                            console.log(this.month);
-                            let daysInMonth = new Date(this.year, this.month + 1, 0).getDate();
-                            // find where to start calendar day of week
-                            let dayOfWeek = new Date(this.year, this.month).getDay();
-                            
-                            let blankdaysArray = [];
-                            for ( var i=1; i <= dayOfWeek; i++) {
-                                blankdaysArray.push(i);
-                            }
-
-                            let daysArray = [];
-                            for ( var i=1; i <= daysInMonth; i++) {
-                                daysArray.push(i);
-                            }
-
-                            this.blankdays = blankdaysArray;
-                            this.no_of_days = daysArray;
-                            
-                            
-                        }
-                    }
-                }
-            </script>
+            
     </div>
+    <script type="text/javascript">
+        const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    </script>
 </body>
 </html>
